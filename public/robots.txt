@@ -1,0 +1,6 @@
+# Elite Power (Pvt.) Ltd. robots.txt
+User-agent: *
+Allow: /
+Disallow: /api/admin
+
+Sitemap: https://www.elitepower.com.pk/sitemap.xml

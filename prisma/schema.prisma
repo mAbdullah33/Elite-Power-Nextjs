@@ -1,0 +1,246 @@
+// Elite Power (Pvt.) Ltd. — Prisma schema
+// Models mirror the Mongoose schema outlined in the project brief.
+// SQLite is used here for the sandbox preview; in production the same
+// schema maps directly to MongoDB via Prisma's MongoDB connector.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         String   @default("admin") // admin | editor | super_admin
+  isActive     Boolean  @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model SiteSetting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+}
+
+// Self-referencing parent/child — supports unlimited nesting.
+model ProductCategory {
+  id             String            @id @default(cuid())
+  name           String
+  slug           String            @unique
+  description    String?
+  longDescription String?
+  image          String?
+  icon           String?
+  parentId       String?
+  parent         ProductCategory?  @relation("CategoryChildren", fields: [parentId], references: [id], onDelete: Cascade)
+  children       ProductCategory[] @relation("CategoryChildren")
+  products       Product[]
+  displayOrder   Int               @default(0)
+  isActive       Boolean           @default(true)
+  seoTitle       String?
+  seoDescription String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@index([parentId])
+  @@index([slug])
+}
+
+model Product {
+  id               String           @id @default(cuid())
+  name             String
+  slug             String           @unique
+  categoryId       String
+  category         ProductCategory  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  shortDescription String?
+  fullDescription  String?
+  specifications   String           // JSON-encoded array of {label, value}
+  features         String           // JSON-encoded array of strings
+  images           String           // JSON-encoded array of image URLs
+  relatedProductIds String          // JSON-encoded array of product IDs
+  displayOrder     Int              @default(0)
+  isActive         Boolean          @default(true)
+  seoTitle         String?
+  seoDescription   String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@index([categoryId])
+  @@index([slug])
+}
+
+model ProjectSector {
+  id               String   @id @default(cuid())
+  name             String
+  slug             String   @unique
+  tagline          String?
+  overview         String?
+  scopeOfWork      String?  // JSON-encoded array of strings
+  services         String?  // JSON-encoded array of strings
+  image            String?
+  bannerImage      String?
+  relatedProductIds String? // JSON-encoded array
+  displayOrder     Int      @default(0)
+  isActive         Boolean  @default(true)
+  seoTitle         String?
+  seoDescription   String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([slug])
+}
+
+model Solution {
+  id               String   @id @default(cuid())
+  name             String
+  slug             String   @unique
+  tagline          String?
+  overview         String?
+  technicalScope   String?  // JSON-encoded array
+  image            String?
+  bannerImage      String?
+  displayOrder     Int      @default(0)
+  isActive         Boolean  @default(true)
+  seoTitle         String?
+  seoDescription   String?
+  createdAt        DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([slug])
+}
+
+model NewsArticle {
+  id            String   @id @default(cuid())
+  title         String
+  slug          String   @unique
+  excerpt       String?
+  content       String?
+  featuredImage String?
+  category      String?
+  tags          String?  // JSON-encoded array
+  author        String?
+  published     Boolean  @default(false)
+  publishedAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([slug])
+  @@index([published])
+}
+
+model TeamMember {
+  id           String   @id @default(cuid())
+  name         String
+  designation   String
+  bio          String?
+  photoUrl     String?
+  linkedinUrl  String?
+  displayOrder Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Client {
+  id           String   @id @default(cuid())
+  name         String
+  logoUrl      String?
+  websiteUrl   String?
+  sector       String?
+  displayOrder Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model FAQ {
+  id        String   @id @default(cuid())
+  category  String
+  question  String
+  answer    String
+  displayOrder Int   @default(0)
+  isActive Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category])
+}
+
+model ContactEnquiry {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  company   String?
+  subject   String?
+  message   String
+  ip        String?
+  userAgent String?
+  isResolved Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model QuoteRequest {
+  id           String   @id @default(cuid())
+  name         String
+  email        String
+  phone        String?
+  company      String?
+  productName  String?
+  sector       String?
+  message      String
+  ip           String?
+  userAgent    String?
+  isResolved   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model NewsletterSubscriber {
+  id       String   @id @default(cuid())
+  email    String   @unique
+  isActive Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model Job {
+  id           String   @id @default(cuid())
+  title        String
+  slug         String   @unique
+  department   String?
+  location     String?
+  type         String?  // Full-time | Contract | Internship
+  description  String
+  requirements String?  // JSON-encoded array
+  isActive     Boolean  @default(true)
+  closingDate  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([slug])
+  applications JobApplication[]
+}
+
+model JobApplication {
+  id        String   @id @default(cuid())
+  jobId     String
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  fullName  String
+  email     String
+  phone     String?
+  coverLetter String?
+  cvPath    String?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@index([jobId])
+}
